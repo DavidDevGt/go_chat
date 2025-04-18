@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Básico en Go</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div id="usernameModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Ingresa tu nombre</h2>
+            <input type="text" id="usernameInput" placeholder="Tu nombre de usuario">
+            <button onclick="setUsername()">Entrar al chat</button>
+        </div>
+    </div>
+
+    <main class="chat-container">
+        <header class="chat-header">
+            <h1>Chat con Go</h1>
+            <div class="online-indicator">
+                <span class="online-dot"></span> En línea
+            </div>
+        </header>
+
+        <section class="chat-messages">
+            <ul id="chat" class="message-list"></ul>
+        </section>
+
+        <div class="chat-input">
+            <input type="text" id="mensaje" class="message-input" placeholder="Escribe un mensaje">
+            <button class="send-btn" onclick="enviarMensaje()">
+                <i data-feather="send" class="icon"></i>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        feather.replace()
+    </script>
+    <script src="main.js"></script>
+</body>
+
+</html>
