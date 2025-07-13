@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	config.LoadAESKey()
 	hub := hub.NewHub()
 	go hub.Run()
 

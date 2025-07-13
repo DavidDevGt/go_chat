@@ -45,6 +45,14 @@ func (c *Client) ReadPump() {
 			break
 		}
 
+		// — Filtrar los heartbeats de la aplicación —
+		var heartbeat struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(rawMessage, &heartbeat); err == nil && heartbeat.Type == "heartbeat" {
+			continue
+		}
+
 		log.Printf("Mensaje recibido: %s", rawMessage)
 
 		// Envolver mensaje con el ID del usuario

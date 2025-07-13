@@ -1,0 +1,22 @@
+services:
+
+  chat-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-chat-server:latest
+    container_name: chat-server
+    ports:
+      - "8420:8420"
+
+  frontend:
+    image: nginx:alpine
+    container_name: chat-frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./main.css:/usr/share/nginx/html/main.css:ro
+      - ./main.js:/usr/share/nginx/html/main.js:ro
+    depends_on:
+      - chat-server
