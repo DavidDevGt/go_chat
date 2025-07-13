@@ -1,50 +1,31 @@
 package main
 
 import (
-	"context"
 	"log"
-	"net/http"
-	"os"
-	"os/signal"
 
 	"go_chat/internal/hub"
+	"go_chat/internal/server"
 	"go_chat/internal/websocket"
 	"go_chat/pkg/config"
 )
 
 func main() {
-	config.LoadAESKey()
+	// Cargar configuración
+	config.Load()
+
+	// Crear y ejecutar hub
 	hub := hub.NewHub()
 	go hub.Run()
 
+	// Crear manejador de WebSocket
 	wsHandler := websocket.NewWebSocketHandler(hub)
-	http.HandleFunc("/ws", wsHandler.ServeWS)
 
-	server := &http.Server{
-		Addr:         config.ServerPort,
-		ReadTimeout:  config.ReadTimeout,
-		WriteTimeout: config.WriteTimeout,
-		IdleTimeout:  config.IdleTimeout,
+	// Crear y configurar servidor
+	srv := server.NewServer(hub)
+	srv.Setup(wsHandler.ServeWS)
+
+	// Ejecutar servidor
+	if err := srv.Run(); err != nil {
+		log.Fatalf("Error ejecutando servidor: %v", err)
 	}
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-
-	go func() {
-		log.Printf("Servidor iniciado en %s", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error en ListenAndServe: %v", err)
-		}
-	}()
-
-	<-stop
-
-	ctx, cancel := context.WithTimeout(context.Background(), config.ShutdownTimeout)
-	defer cancel()
-
-	log.Println("Apagando el servidor...")
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Error al apagar el servidor: %v", err)
-	}
-	log.Println("Servidor apagado correctamente")
 }
