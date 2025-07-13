@@ -18,6 +18,8 @@ coverage.txt
 .env
 .env.local
 .env.production
+.env.development
+.env.test
 
 # Logs
 *.log
@@ -46,3 +48,9 @@ Thumbs.db
 
 # Go workspace
 go.work
+
+# Archivos de configuración sensibles
+*.key
+*.pem
+*.crt
+*.p12

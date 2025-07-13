@@ -9,6 +9,7 @@ Una aplicación de chat en tiempo real construida con Go, WebSockets y una inter
 - Soporte para múltiples usuarios
 - Indicador de estado en línea
 - Diseño limpio y minimalista
+- **Configuración segura** con archivo .env
 
 ## 📁 Estructura del Proyecto
 
@@ -41,6 +42,9 @@ go_chat/
 ├── Dockerfile                  # Imagen de Docker
 ├── go.mod                      # Dependencias de Go
 ├── go.sum                      # Checksums de dependencias
+├── env.example                 # Ejemplo de variables de entorno
+├── setup.ps1                   # Script de configuración para Windows
+├── setup.sh                    # Script de configuración para Unix/Linux
 └── README.md                   # Este archivo
 ```
 
@@ -50,8 +54,27 @@ go_chat/
 
 - Go 1.21 o superior
 - Docker (opcional)
+- Make (opcional, se instala automáticamente)
 
-### Instalación Local
+### Configuración Automática (Recomendado)
+
+#### Windows
+```powershell
+# Ejecutar como administrador si es necesario
+.\setup.ps1
+```
+
+#### Unix/Linux/macOS
+```bash
+# Hacer ejecutable y ejecutar
+chmod +x setup.sh
+./setup.sh
+
+# O ejecutar directamente
+bash setup.sh
+```
+
+### Instalación Manual
 
 1. Clona el repositorio:
 ```bash
@@ -59,9 +82,13 @@ git clone <tu-repositorio>
 cd go_chat
 ```
 
-2. Configura la variable de entorno para la clave AES:
+2. Crea el archivo de configuración:
 ```bash
-export CHAT_AES_KEY="tu-clave-de-32-caracteres-aqui"
+# Copia el archivo de ejemplo
+cp env.example .env
+
+# Edita el archivo .env con tus configuraciones
+# IMPORTANTE: Configura CHAT_AES_KEY con una clave segura
 ```
 
 3. Ejecuta la aplicación:
@@ -73,56 +100,112 @@ go run cmd/server/main.go
 
 ### Instalación con Docker
 
-1. Construye la imagen:
+1. Configura el archivo .env:
 ```bash
-docker build -t go-chat .
+cp env.example .env
+# Edita .env con tus configuraciones
 ```
 
-2. Ejecuta el contenedor:
+2. Construye y ejecuta:
 ```bash
-docker run -p 8420:8420 -e CHAT_AES_KEY="tu-clave-de-32-caracteres-aqui" go-chat
+make docker-build
+make docker-run
 ```
 
 ## 🔧 Configuración
 
-### Variables de Entorno
+### Archivo .env
 
-- `CHAT_AES_KEY`: Clave AES de 32 caracteres para encriptación (requerida)
+La aplicación usa un archivo `.env` para la configuración. Este archivo **NO se sube al repositorio** por seguridad.
+
+**Variables disponibles:**
+- `CHAT_AES_KEY`: Clave AES de 32 caracteres para encriptación (requerida para producción)
 - `PORT`: Puerto del servidor (opcional, por defecto 8420)
+- `READ_TIMEOUT`: Timeout de lectura (opcional, por defecto 15s)
+- `WRITE_TIMEOUT`: Timeout de escritura (opcional, por defecto 15s)
+- `IDLE_TIMEOUT`: Timeout de inactividad (opcional, por defecto 60s)
+- `SHUTDOWN_TIMEOUT`: Timeout de apagado (opcional, por defecto 15s)
+- `DEBUG`: Modo debug (opcional, por defecto false)
+- `LOG_LEVEL`: Nivel de logging (opcional, por defecto info)
 
-### Configuración del Servidor
+### Generar Clave Segura
 
-Los valores de configuración se pueden modificar en `pkg/config/config.go`:
+Para producción, genera una clave AES segura:
 
-- `ServerPort`: Puerto del servidor
-- `ReadTimeout`: Timeout de lectura
-- `WriteTimeout`: Timeout de escritura
-- `IdleTimeout`: Timeout de inactividad
-- `ShutdownTimeout`: Timeout de apagado
+```bash
+# Linux/macOS
+openssl rand -hex 16
+
+# Windows (PowerShell)
+[System.Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(16))
+```
 
 ## 🚀 Desarrollo
 
 ### Ejecutar en modo desarrollo
 
 ```bash
+# Con Makefile (recomendado)
+make run
+
+# Directamente
 go run cmd/server/main.go
+
+# Con hot reload (requiere air)
+make dev
 ```
 
 ### Construir para producción
 
 ```bash
-go build -o bin/server cmd/server/main.go
+make build
 ```
 
 ### Ejecutar tests
 
 ```bash
-go test ./...
+make test
 ```
+
+### Comandos disponibles
+
+```bash
+make help              # Ver todos los comandos
+make run               # Ejecutar aplicación
+make dev               # Modo desarrollo con hot reload
+make build             # Construir para producción
+make clean             # Limpiar archivos generados
+make test              # Ejecutar tests
+make docker-build      # Construir imagen Docker
+make docker-run        # Ejecutar con Docker
+make format            # Formatear código
+make lint              # Ejecutar linter
+make env-init          # Inicializar archivo .env
+```
+
+## 🔒 Seguridad
+
+### Desarrollo
+- La aplicación genera automáticamente una clave AES para desarrollo
+- No se requiere configuración previa
+- El archivo `.env` está en `.gitignore` para proteger las claves
+
+### Producción
+- **IMPORTANTE**: Configura `CHAT_AES_KEY` con una clave de 32 caracteres
+- Usa una clave segura y única para cada entorno
+- El archivo `.env` nunca se sube al repositorio
+- Ejemplo de clave segura: `openssl rand -hex 16`
+
+### Protección de Claves
+- ✅ Archivo `.env` en `.gitignore`
+- ✅ Claves no hardcodeadas en el código
+- ✅ Configuración flexible con variables de entorno
+- ✅ Scripts de configuración seguros
 
 ## 📦 Dependencias
 
 - `github.com/gorilla/websocket`: Para manejo de WebSockets
+- `github.com/joho/godotenv`: Para cargar archivo .env
 - `golang.org/x/net`: Dependencia indirecta
 
 ## 🤝 Contribuir

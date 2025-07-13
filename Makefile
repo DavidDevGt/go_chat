@@ -2,7 +2,6 @@
 BINARY_NAME=go-chat
 BUILD_DIR=bin
 MAIN_PATH=cmd/server/main.go
-AES_KEY=12345678901234567890123456789012
 
 # Colores para output
 GREEN=\033[0;32m
@@ -24,7 +23,7 @@ build: ## Construye la aplicación
 
 run: ## Ejecuta la aplicación en modo desarrollo
 	@echo "$(GREEN)Ejecutando aplicación...$(NC)"
-	CHAT_AES_KEY=$(AES_KEY) go run $(MAIN_PATH)
+	go run $(MAIN_PATH)
 
 clean: ## Limpia archivos generados
 	@echo "$(GREEN)Limpiando archivos generados...$(NC)"
@@ -45,7 +44,7 @@ docker-build: ## Construye la imagen Docker
 
 docker-run: ## Ejecuta el contenedor Docker
 	@echo "$(GREEN)Ejecutando contenedor Docker...$(NC)"
-	docker run -p 8420:8420 -e CHAT_AES_KEY=$(AES_KEY) $(BINARY_NAME)
+	docker run -p 8420:8420 --env-file .env $(BINARY_NAME)
 
 docker-compose-up: ## Levanta los servicios con Docker Compose
 	@echo "$(GREEN)Levantando servicios con Docker Compose...$(NC)"
@@ -55,14 +54,22 @@ docker-compose-down: ## Detiene los servicios de Docker Compose
 	@echo "$(GREEN)Deteniendo servicios de Docker Compose...$(NC)"
 	docker-compose down
 
+docker-compose-logs: ## Muestra logs de Docker Compose
+	@echo "$(GREEN)Mostrando logs...$(NC)"
+	docker-compose logs -f
+
+docker-compose-restart: ## Reinicia los servicios de Docker Compose
+	@echo "$(GREEN)Reiniciando servicios...$(NC)"
+	docker-compose restart
+
 dev: ## Ejecuta en modo desarrollo con hot reload (requiere air)
 	@echo "$(GREEN)Ejecutando en modo desarrollo...$(NC)"
 	@if command -v air > /dev/null; then \
-		CHAT_AES_KEY=$(AES_KEY) air; \
+		air; \
 	else \
 		echo "$(YELLOW)Air no está instalado. Instalando...$(NC)"; \
 		go install github.com/cosmtrek/air@latest; \
-		CHAT_AES_KEY=$(AES_KEY) air; \
+		air; \
 	fi
 
 install-deps: ## Instala dependencias de desarrollo
@@ -86,12 +93,29 @@ lint: ## Ejecuta el linter
 
 setup: ## Configura el entorno de desarrollo
 	@echo "$(GREEN)Configurando entorno de desarrollo...$(NC)"
-	@echo "$(YELLOW)Configurando variable de entorno CHAT_AES_KEY...$(NC)"
-	@if [ "$(OS)" = "Windows_NT" ]; then \
-		setx CHAT_AES_KEY $(AES_KEY); \
-		echo "$(GREEN)Variable CHAT_AES_KEY configurada en Windows$(NC)"; \
+	@if [ ! -f .env ]; then \
+		echo "$(YELLOW)Creando archivo .env desde env.example...$(NC)"; \
+		cp env.example .env; \
+		echo "$(GREEN)Archivo .env creado. Edita las variables según necesites.$(NC)"; \
 	else \
-		echo "export CHAT_AES_KEY=$(AES_KEY)" >> ~/.bashrc; \
-		echo "$(GREEN)Variable CHAT_AES_KEY configurada en Linux/Mac$(NC)"; \
+		echo "$(GREEN)Archivo .env ya existe.$(NC)"; \
 	fi
-	@echo "$(GREEN)¡Entorno configurado!$(NC)" 
+	@echo "$(GREEN)¡Entorno configurado!$(NC)"
+
+setup-windows: ## Configura el entorno en Windows
+	@echo "$(GREEN)Ejecutando script de configuración para Windows...$(NC)"
+	powershell -ExecutionPolicy Bypass -File setup.ps1
+
+setup-unix: ## Configura el entorno en Unix/Linux
+	@echo "$(GREEN)Ejecutando script de configuración para Unix/Linux...$(NC)"
+	chmod +x setup.sh && ./setup.sh
+
+env-init: ## Inicializa el archivo .env desde env.example
+	@echo "$(GREEN)Inicializando archivo .env...$(NC)"
+	@if [ ! -f .env ]; then \
+		cp env.example .env; \
+		echo "$(GREEN)Archivo .env creado desde env.example$(NC)"; \
+		echo "$(YELLOW)IMPORTANTE: Edita el archivo .env y configura CHAT_AES_KEY con una clave segura$(NC)"; \
+	else \
+		echo "$(YELLOW)Archivo .env ya existe. No se sobrescribió.$(NC)"; \
+	fi 

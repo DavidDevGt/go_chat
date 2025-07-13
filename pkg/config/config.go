@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // Config contiene toda la configuración de la aplicación
@@ -18,13 +20,20 @@ type Config struct {
 	ReadBufferSize  int
 	WriteBufferSize int
 	AESKey          []byte
+	Debug           bool
+	LogLevel        string
 }
 
 // App es la instancia global de configuración
 var App *Config
 
-// Load carga la configuración desde variables de entorno y valores por defecto
+// Load carga la configuración desde archivo .env y variables de entorno
 func Load() {
+	// Cargar archivo .env si existe
+	if err := godotenv.Load(); err != nil {
+		log.Println("ℹ️  Archivo .env no encontrado, usando variables de entorno")
+	}
+
 	App = &Config{
 		ServerPort:      getEnv("PORT", ":8420"),
 		ReadTimeout:     getDurationEnv("READ_TIMEOUT", 15*time.Second),
@@ -33,6 +42,8 @@ func Load() {
 		ShutdownTimeout: getDurationEnv("SHUTDOWN_TIMEOUT", 15*time.Second),
 		ReadBufferSize:  getIntEnv("READ_BUFFER_SIZE", 1024),
 		WriteBufferSize: getIntEnv("WRITE_BUFFER_SIZE", 1024),
+		Debug:           getBoolEnv("DEBUG", false),
+		LogLevel:        getEnv("LOG_LEVEL", "info"),
 	}
 
 	// Cargar clave AES
@@ -57,6 +68,16 @@ func getIntEnv(key string, defaultValue int) int {
 	return defaultValue
 }
 
+// getBoolEnv obtiene una variable de entorno como booleano o retorna el valor por defecto
+func getBoolEnv(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
+	}
+	return defaultValue
+}
+
 // getDurationEnv obtiene una variable de entorno como duración o retorna el valor por defecto
 func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
@@ -75,6 +96,7 @@ func loadAESKey() {
 		// Generar una clave por defecto para desarrollo
 		log.Println("⚠️  CHAT_AES_KEY no configurada. Generando clave por defecto para desarrollo.")
 		log.Println("⚠️  Para producción, configura CHAT_AES_KEY con una clave de 32 caracteres.")
+		log.Println("⚠️  Puedes generar una clave segura con: openssl rand -hex 16")
 		App.AESKey = generateDefaultKey()
 		return
 	}

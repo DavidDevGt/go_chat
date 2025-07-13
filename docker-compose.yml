@@ -1,13 +1,24 @@
+version: '3.8'
+
 services:
 
   chat-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     image: go-chat-server:latest
     container_name: chat-server
     ports:
       - "8420:8420"
+    env_file:
+      - .env
+    volumes:
+      - ./web:/app/web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8420"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     image: nginx:alpine
